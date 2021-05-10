@@ -1,3 +1,5 @@
+import os
+
 import requests
 from bs4 import BeautifulSoup
 from googlesearch import search
@@ -5,17 +7,16 @@ from googlesearch import search
 
 def color_string(code):
     """"https://stackoverflow.com/questions/287871/how-to-print-colored-text-in-python"""
-    if code == 'Best':   #BEST
+    if code == 'Best':  # BEST
         return '\x1b[6;30;44m'
-    elif code == 'Good': #GOOD
+    elif code == 'Good':  # GOOD
         return '\x1b[6;30;42m'
-    elif code == 'Average': #AVERAGE
+    elif code == 'Average':  # AVERAGE
         return '\x1b[6;30;43m'
-    elif code == 'Poor': #POOR
+    elif code == 'Poor':  # POOR
         return '\x1b[6;30;41m'
     else:
         return '\x1b[6;30;47m'
-
 
 
 def get_page_html(url):
@@ -27,9 +28,12 @@ def get_page_html(url):
 
 def search_request(skincare_ingredient):
     paulas_url = search(query=skincare_ingredient + " paula's choice", num=1)
-    content = get_page_html(next(paulas_url))
+    try:
+        content = get_page_html(next(paulas_url))
+    except:
+        return "NONE", None
     soup = BeautifulSoup(content, 'html.parser')
-    ratting = soup.find('span',{"class": "rating-best"})
+    ratting = soup.find('span', {"class": "rating-best"})
     if ratting is None:
         ratting = soup.find('span', {"class": "rating-good"})
         if ratting is None:
@@ -40,7 +44,7 @@ def search_request(skincare_ingredient):
                     ratting = "NONE"
                     return ratting, None
     text = soup.get_text()
-    star_indx = text.find("Categories:")
+    star_indx = text.find("Categories:") + 11
     end_indx = text.find("References for this information:")
     if end_indx == -1:
         end_indx = text.find("Back to Ingredient Dictionary")
@@ -55,8 +59,10 @@ if __name__ == '__main__':
         if ingredient == 'exit' or ingredient == 'e':
             break
         ratting, text = search_request(ingredient)
-        print("Ratting:",color_string(ratting)+ ratting+ '\x1b[0m')
+        print("\033[4mRatting:\033[0m", color_string(ratting) + ratting + '\x1b[0m')
         if text is None:
-            print(color_string(ratting) + "INGREDIENT NOT FOUND"+ '\x1b[0m')
+            print(color_string(ratting) + "INGREDIENT NOT FOUND" + '\x1b[0m')
         else:
-            print(text)
+            print("\033[4mCategories:\033[0m", text)
+
+        os.remove("./.google-cookie")
